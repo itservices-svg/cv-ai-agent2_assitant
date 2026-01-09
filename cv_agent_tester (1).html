@@ -1,0 +1,665 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CV Agent Tester</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 15px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+            overflow: hidden;
+        }
+        .header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 30px;
+            text-align: center;
+        }
+        .header h1 {
+            font-size: 32px;
+            margin-bottom: 10px;
+        }
+        .header p {
+            font-size: 16px;
+            opacity: 0.9;
+        }
+        .content {
+            padding: 30px;
+        }
+        .section {
+            margin-bottom: 25px;
+        }
+        .label {
+            font-weight: 600;
+            margin-bottom: 8px;
+            color: #333;
+            font-size: 14px;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+        input[type="text"],
+        input[type="password"],
+        select {
+            width: 100%;
+            padding: 12px 15px;
+            border: 2px solid #e0e0e0;
+            border-radius: 8px;
+            font-size: 14px;
+            transition: all 0.3s;
+        }
+        input:focus,
+        select:focus {
+            outline: none;
+            border-color: #667eea;
+            box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+        }
+        textarea {
+            width: 100%;
+            height: 250px;
+            padding: 15px;
+            border: 2px solid #e0e0e0;
+            border-radius: 8px;
+            font-family: 'Courier New', monospace;
+            font-size: 13px;
+            resize: vertical;
+            transition: all 0.3s;
+        }
+        textarea:focus {
+            outline: none;
+            border-color: #667eea;
+            box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+        }
+        .button-group {
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+            margin-top: 15px;
+        }
+        button {
+            padding: 12px 25px;
+            border: none;
+            border-radius: 8px;
+            font-size: 14px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+        }
+        button:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+        }
+        .btn-primary {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+        }
+        .btn-primary:hover:not(:disabled) {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(102, 126, 234, 0.4);
+        }
+        .btn-secondary {
+            background: #6c757d;
+            color: white;
+        }
+        .btn-secondary:hover {
+            background: #5a6268;
+        }
+        .response-container {
+            margin-top: 30px;
+            padding: 20px;
+            background: #f8f9fa;
+            border-radius: 8px;
+            display: none;
+        }
+        .response-container.show {
+            display: block;
+        }
+        .response-header {
+            font-weight: 600;
+            margin-bottom: 15px;
+            font-size: 16px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        .response-content {
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            border-left: 4px solid #667eea;
+            white-space: pre-wrap;
+            font-family: 'Courier New', monospace;
+            font-size: 13px;
+            line-height: 1.6;
+            max-height: 500px;
+            overflow-y: auto;
+        }
+        .success {
+            color: #28a745;
+        }
+        .error {
+            color: #dc3545;
+        }
+        .error .response-content {
+            border-left-color: #dc3545;
+            background: #fff5f5;
+        }
+        .info-box {
+            background: #e7f3ff;
+            border-left: 4px solid #2196F3;
+            padding: 15px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+        }
+        .info-box h3 {
+            color: #1976D2;
+            margin-bottom: 8px;
+            font-size: 16px;
+        }
+        .info-box p {
+            color: #555;
+            font-size: 14px;
+            line-height: 1.6;
+        }
+        .info-box ol {
+            margin-left: 20px;
+            margin-top: 10px;
+            color: #555;
+        }
+        .info-box li {
+            margin-bottom: 5px;
+        }
+        .grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+        }
+        @media (max-width: 768px) {
+            .grid {
+                grid-template-columns: 1fr;
+            }
+            .button-group {
+                flex-direction: column;
+            }
+            button {
+                width: 100%;
+            }
+        }
+        .loading {
+            display: inline-block;
+            width: 16px;
+            height: 16px;
+            border: 2px solid #f3f3f3;
+            border-top: 2px solid #667eea;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+        }
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+        .debug-info {
+            margin-top: 15px;
+            padding: 10px;
+            background: #f0f0f0;
+            border-radius: 5px;
+            font-size: 12px;
+            font-family: monospace;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🤖 CV Agent Tester</h1>
+            <p>Test your custom CV content generator agent with different inputs</p>
+        </div>
+
+        <div class="content">
+            <div class="info-box">
+                <h3>📌 How to Get Your Agent ID</h3>
+                <ol>
+                    <li>Click <strong>"Publish"</strong> button in your Agent Builder</li>
+                    <li>After publishing, click the <strong>"Code"</strong> button (top right)</li>
+                    <li>Look for <strong>"assistant_id"</strong> in the code example</li>
+                    <li>Copy the ID (starts with "asst_") and paste it below</li>
+                </ol>
+                <p style="margin-top: 10px;"><strong>Alternative:</strong> Leave Agent ID empty to test using direct ChatCompletion API (generic model, not your custom agent)</p>
+            </div>
+
+            <div class="grid">
+                <div class="section">
+                    <div class="label">🔑 OpenAI API Key</div>
+                    <input type="password" id="apiKey" placeholder="sk-...">
+                </div>
+
+                <div class="section">
+                    <div class="label">🤖 Agent ID (Optional)</div>
+                    <input type="text" id="agentId" placeholder="asst_... (leave empty for direct API)">
+                </div>
+            </div>
+
+            <div class="section">
+                <div class="label">📋 Select Test Scenario</div>
+                <select id="testScenario">
+                    <option value="custom">Custom Input</option>
+                    <option value="full">Full Information - All Fields</option>
+                    <option value="minimal">Minimal Information - Basic Only</option>
+                    <option value="no_target">No Target Role - Skills Only</option>
+                    <option value="work_full">Work Description - With Achievements</option>
+                    <option value="work_basic">Work Description - Basic</option>
+                    <option value="skills">Skills Summary</option>
+                </select>
+            </div>
+
+            <div class="section">
+                <div class="label">✍️ Test Input (JSON)</div>
+                <textarea id="input"></textarea>
+            </div>
+
+            <div class="button-group">
+                <button class="btn-primary" id="testBtn">
+                    🚀 Test Agent
+                </button>
+                <button class="btn-secondary" id="formatBtn">
+                    ✨ Format JSON
+                </button>
+                <button class="btn-secondary" id="clearBtn">
+                    🗑️ Clear Response
+                </button>
+            </div>
+
+            <div class="response-container" id="responseContainer">
+                <div class="response-header" id="responseHeader"></div>
+                <div class="response-content" id="responseContent"></div>
+                <div class="debug-info" id="debugInfo" style="display: none;"></div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const scenarios = {
+            full: {
+                request_type: "generate_objective",
+                user_data: {
+                    name: "Ahmed Khan",
+                    current_role: "Software Developer",
+                    years_experience: 3,
+                    target_role: "Senior Full Stack Developer",
+                    industry: "FinTech",
+                    key_skills: ["React", "Node.js", "MongoDB", "AWS"],
+                    education: "BS Computer Science"
+                },
+                preferences: {
+                    tone: "professional",
+                    length: "medium",
+                    focus_areas: ["leadership", "technical expertise"]
+                }
+            },
+            minimal: {
+                request_type: "generate_objective",
+                user_data: {
+                    current_role: "Software Developer",
+                    years_experience: 3
+                }
+            },
+            no_target: {
+                request_type: "generate_objective",
+                user_data: {
+                    current_role: "Developer",
+                    industry: "FinTech",
+                    key_skills: ["React", "Node.js"]
+                }
+            },
+            work_full: {
+                request_type: "generate_work_description",
+                user_data: {
+                    job_title: "Junior Software Developer",
+                    company: "Tech Solutions Ltd",
+                    duration: "2021-2024",
+                    responsibilities: [
+                        "Developed web applications",
+                        "Collaborated with team",
+                        "Fixed bugs"
+                    ],
+                    technologies: ["React", "Python", "PostgreSQL"],
+                    achievements: [
+                        "Reduced load time by 40%",
+                        "Implemented new feature that reduced support tickets by 25%"
+                    ]
+                },
+                preferences: {
+                    tone: "achievement-focused",
+                    length: "detailed",
+                    include_metrics: true
+                }
+            },
+            work_basic: {
+                request_type: "generate_work_description",
+                user_data: {
+                    job_title: "Software Developer",
+                    company: "Tech Corp",
+                    responsibilities: [
+                        "Developed applications",
+                        "Worked with team"
+                    ]
+                }
+            },
+            skills: {
+                request_type: "generate_skills_summary",
+                user_data: {
+                    key_skills: ["JavaScript", "Python", "React", "Node.js", "Docker", "AWS", "Problem Solving", "Team Leadership"],
+                    years_experience: 3,
+                    target_role: "Senior Full Stack Developer"
+                },
+                preferences: {
+                    tone: "professional",
+                    length: "medium"
+                }
+            }
+        };
+
+        function loadScenario() {
+            const scenario = document.getElementById('testScenario').value;
+            if (scenario !== 'custom') {
+                document.getElementById('input').value = JSON.stringify(scenarios[scenario], null, 2);
+            }
+        }
+
+        function formatJSON() {
+            const input = document.getElementById('input').value;
+            try {
+                const parsed = JSON.parse(input);
+                document.getElementById('input').value = JSON.stringify(parsed, null, 2);
+                showSuccess('JSON formatted successfully!');
+            } catch (error) {
+                showError('Invalid JSON format: ' + error.message);
+            }
+        }
+
+        function clearResponse() {
+            document.getElementById('responseContainer').classList.remove('show');
+        }
+
+        function showSuccess(message) {
+            const responseContainer = document.getElementById('responseContainer');
+            const responseHeader = document.getElementById('responseHeader');
+            const responseContent = document.getElementById('responseContent');
+
+            responseContainer.classList.add('show');
+            responseContainer.classList.remove('error');
+            responseHeader.innerHTML = '✅ <span class="success">Success!</span>';
+            responseContent.textContent = message;
+        }
+
+        function showError(message, debugData = null) {
+            const responseContainer = document.getElementById('responseContainer');
+            const responseHeader = document.getElementById('responseHeader');
+            const responseContent = document.getElementById('responseContent');
+            const debugInfo = document.getElementById('debugInfo');
+
+            responseContainer.classList.add('show', 'error');
+            responseHeader.innerHTML = '❌ <span class="error">Error</span>';
+            responseContent.textContent = message;
+
+            if (debugData) {
+                debugInfo.style.display = 'block';
+                debugInfo.textContent = 'Debug Info:\n' + JSON.stringify(debugData, null, 2);
+            } else {
+                debugInfo.style.display = 'none';
+            }
+        }
+
+        async function testAgent() {
+            const apiKey = document.getElementById('apiKey').value.trim();
+            const agentId = document.getElementById('agentId').value.trim();
+            const input = document.getElementById('input').value;
+            const responseContainer = document.getElementById('responseContainer');
+            const responseHeader = document.getElementById('responseHeader');
+            const responseContent = document.getElementById('responseContent');
+            const testBtn = document.getElementById('testBtn');
+
+            if (!apiKey) {
+                showError('Please enter your OpenAI API key');
+                return;
+            }
+
+            if (!input) {
+                showError('Please enter test input JSON');
+                return;
+            }
+
+            let testInput;
+            try {
+                testInput = JSON.parse(input);
+            } catch (error) {
+                showError('Invalid JSON format: ' + error.message);
+                return;
+            }
+
+            responseContainer.classList.add('show');
+            responseContainer.classList.remove('error');
+            responseHeader.innerHTML = '<div class="loading"></div> Testing agent... Please wait...';
+            responseContent.textContent = '';
+            testBtn.disabled = true;
+
+            try {
+                let result;
+                
+                if (agentId) {
+                    responseContent.textContent = 'Using Assistant API with ID: ' + agentId + '\nCreating thread...';
+                    result = await testWithAssistant(apiKey, agentId, testInput);
+                } else {
+                    responseContent.textContent = 'Using Chat Completion API (no agent ID provided)...';
+                    result = await testWithChatCompletion(apiKey, testInput);
+                }
+
+                responseHeader.innerHTML = '✅ <span class="success">Success! Agent Response:</span>';
+                responseContent.textContent = JSON.stringify(result, null, 2);
+            } catch (error) {
+                showError(error.message, error.debugData);
+            } finally {
+                testBtn.disabled = false;
+            }
+        }
+
+        async function testWithChatCompletion(apiKey, testInput) {
+            try {
+                const response = await fetch('https://api.openai.com/v1/chat/completions', {
+                    method: 'POST',
+                    headers: {
+                        'Authorization': `Bearer ${apiKey}`,
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        model: 'gpt-4-turbo-preview',
+                        messages: [{
+                            role: 'user',
+                            content: JSON.stringify(testInput)
+                        }],
+                        response_format: { type: "json_object" }
+                    })
+                });
+
+                const data = await response.json();
+
+                if (!response.ok) {
+                    const error = new Error(`API Error (${response.status}): ${data.error?.message || response.statusText}`);
+                    error.debugData = data;
+                    throw error;
+                }
+
+                return JSON.parse(data.choices[0].message.content);
+            } catch (error) {
+                if (error.debugData) throw error;
+                
+                const wrappedError = new Error(`Network/Parse Error: ${error.message}`);
+                wrappedError.debugData = { originalError: error.toString() };
+                throw wrappedError;
+            }
+        }
+
+        async function testWithAssistant(apiKey, assistantId, testInput) {
+            const headers = {
+                'Authorization': `Bearer ${apiKey}`,
+                'Content-Type': 'application/json',
+                'OpenAI-Beta': 'assistants=v2'
+            };
+
+            try {
+                // Create thread
+                const threadResponse = await fetch('https://api.openai.com/v1/threads', {
+                    method: 'POST',
+                    headers,
+                    body: JSON.stringify({})
+                });
+
+                const threadData = await threadResponse.json();
+                
+                if (!threadResponse.ok) {
+                    const error = new Error(`Failed to create thread: ${threadData.error?.message || threadResponse.statusText}`);
+                    error.debugData = threadData;
+                    throw error;
+                }
+
+                const thread = threadData;
+
+                // Send message
+                const messageResponse = await fetch(`https://api.openai.com/v1/threads/${thread.id}/messages`, {
+                    method: 'POST',
+                    headers,
+                    body: JSON.stringify({
+                        role: 'user',
+                        content: JSON.stringify(testInput)
+                    })
+                });
+
+                const messageData = await messageResponse.json();
+
+                if (!messageResponse.ok) {
+                    const error = new Error(`Failed to send message: ${messageData.error?.message || messageResponse.statusText}`);
+                    error.debugData = messageData;
+                    throw error;
+                }
+
+                // Run assistant
+                const runResponse = await fetch(`https://api.openai.com/v1/threads/${thread.id}/runs`, {
+                    method: 'POST',
+                    headers,
+                    body: JSON.stringify({
+                        assistant_id: assistantId
+                    })
+                });
+
+                const runData = await runResponse.json();
+
+                if (!runResponse.ok) {
+                    const error = new Error(`Failed to run assistant: ${runData.error?.message || runResponse.statusText}`);
+                    error.debugData = runData;
+                    throw error;
+                }
+
+                const run = runData;
+
+                // Wait for completion
+                const runStatus = await waitForRun(apiKey, thread.id, run.id);
+
+                if (runStatus.status !== 'completed') {
+                    const error = new Error(`Run failed with status: ${runStatus.status}. ${runStatus.last_error?.message || ''}`);
+                    error.debugData = runStatus;
+                    throw error;
+                }
+
+                // Get messages
+                const messagesResponse = await fetch(`https://api.openai.com/v1/threads/${thread.id}/messages`, {
+                    headers
+                });
+
+                const messagesData = await messagesResponse.json();
+
+                if (!messagesResponse.ok) {
+                    const error = new Error(`Failed to retrieve messages: ${messagesData.error?.message || messagesResponse.statusText}`);
+                    error.debugData = messagesData;
+                    throw error;
+                }
+
+                const assistantMessage = messagesData.data[0].content[0].text.value;
+
+                try {
+                    return JSON.parse(assistantMessage);
+                } catch (parseError) {
+                    // If response is not JSON, return as is
+                    return { raw_response: assistantMessage };
+                }
+            } catch (error) {
+                if (error.debugData) throw error;
+                
+                const wrappedError = new Error(`Network/Parse Error: ${error.message}`);
+                wrappedError.debugData = { originalError: error.toString() };
+                throw wrappedError;
+            }
+        }
+
+        async function waitForRun(apiKey, threadId, runId) {
+            let attempts = 0;
+            const maxAttempts = 60; // Increased timeout
+            const headers = {
+                'Authorization': `Bearer ${apiKey}`,
+                'OpenAI-Beta': 'assistants=v2'
+            };
+
+            while (attempts < maxAttempts) {
+                const response = await fetch(`https://api.openai.com/v1/threads/${threadId}/runs/${runId}`, {
+                    headers
+                });
+
+                const run = await response.json();
+
+                if (!response.ok) {
+                    const error = new Error(`Failed to check run status: ${run.error?.message || response.statusText}`);
+                    error.debugData = run;
+                    throw error;
+                }
+
+                const responseContent = document.getElementById('responseContent');
+                responseContent.textContent = `Waiting for completion... Status: ${run.status} (${attempts + 1}/${maxAttempts})`;
+
+                if (run.status === 'completed' || run.status === 'failed' || run.status === 'cancelled' || run.status === 'expired') {
+                    return run;
+                }
+
+                await new Promise(resolve => setTimeout(resolve, 2000));
+                attempts++;
+            }
+
+            throw new Error('Timeout waiting for run to complete (60 seconds)');
+        }
+
+        // Event listeners
+        document.getElementById('testScenario').addEventListener('change', loadScenario);
+        document.getElementById('testBtn').addEventListener('click', testAgent);
+        document.getElementById('formatBtn').addEventListener('click', formatJSON);
+        document.getElementById('clearBtn').addEventListener('click', clearResponse);
+
+        // Initialize
+        loadScenario();
+    </script>
+</body>
+</html>
