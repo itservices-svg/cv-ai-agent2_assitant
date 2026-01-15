@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>CV Agent Tester</title>
+    <title>CV Description Generator Tester</title>
     <style>
         * {
             margin: 0;
@@ -144,12 +144,43 @@
             padding: 20px;
             border-radius: 8px;
             border-left: 4px solid #667eea;
-            white-space: pre-wrap;
-            font-family: 'Courier New', monospace;
-            font-size: 13px;
-            line-height: 1.6;
             max-height: 500px;
             overflow-y: auto;
+        }
+        .tone-block {
+            margin-bottom: 20px;
+            padding: 15px;
+            background: #f8f9fa;
+            border-radius: 8px;
+            border-left: 4px solid #667eea;
+        }
+        .tone-block.casual {
+            border-left-color: #28a745;
+        }
+        .tone-block.professional {
+            border-left-color: #007bff;
+        }
+        .tone-block.corporate {
+            border-left-color: #6f42c1;
+        }
+        .tone-title {
+            font-weight: 700;
+            font-size: 14px;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            margin-bottom: 10px;
+            color: #333;
+        }
+        .tone-text {
+            line-height: 1.8;
+            color: #555;
+            font-size: 15px;
+        }
+        .word-count {
+            font-size: 12px;
+            color: #888;
+            margin-top: 8px;
+            font-style: italic;
         }
         .success {
             color: #28a745;
@@ -177,14 +208,21 @@
             color: #555;
             font-size: 14px;
             line-height: 1.6;
+            margin-bottom: 8px;
         }
-        .info-box ol {
+        .info-box ul {
             margin-left: 20px;
-            margin-top: 10px;
             color: #555;
         }
         .info-box li {
             margin-bottom: 5px;
+        }
+        .info-box code {
+            background: #f0f0f0;
+            padding: 2px 6px;
+            border-radius: 3px;
+            font-family: monospace;
+            font-size: 12px;
         }
         .grid {
             display: grid;
@@ -223,25 +261,39 @@
             font-size: 12px;
             font-family: monospace;
         }
+        .raw-json {
+            background: white;
+            padding: 15px;
+            border-radius: 8px;
+            margin-top: 15px;
+            border: 1px solid #e0e0e0;
+        }
+        .raw-json pre {
+            white-space: pre-wrap;
+            font-family: 'Courier New', monospace;
+            font-size: 12px;
+            color: #333;
+            margin: 0;
+        }
     </style>
 </head>
 <body>
     <div class="container">
         <div class="header">
-            <h1>🤖 CV Agent Tester</h1>
-            <p>Test your custom CV content generator agent with different inputs</p>
+            <h1>📄 CV Description Generator Tester</h1>
+            <p>Test your CV content generator with different section types</p>
         </div>
 
         <div class="content">
             <div class="info-box">
-                <h3>📌 How to Get Your Agent ID</h3>
-                <ol>
-                    <li>Click <strong>"Publish"</strong> button in your Agent Builder</li>
-                    <li>After publishing, click the <strong>"Code"</strong> button (top right)</li>
-                    <li>Look for <strong>"assistant_id"</strong> in the code example</li>
-                    <li>Copy the ID (starts with "asst_") and paste it below</li>
-                </ol>
-                <p style="margin-top: 10px;"><strong>Alternative:</strong> Leave Agent ID empty to test using direct ChatCompletion API (generic model, not your custom agent)</p>
+                <h3>📋 Section Types & Expected Output</h3>
+                <ul>
+                    <li><strong>Experience:</strong> Work history with tense based on <code>to_date</code></li>
+                    <li><strong>Project:</strong> Technical projects with tense based on <code>to_date</code></li>
+                    <li><strong>Certificate:</strong> Credentials with tense based on <code>to_date</code></li>
+                    <li><strong>Objective:</strong> Career summary (always present tense)</li>
+                </ul>
+                <p><strong>Output:</strong> 3 descriptions per section - Casual (30-40 words), Professional (40-50 words), Corporate (50-60 words)</p>
             </div>
 
             <div class="grid">
@@ -260,17 +312,26 @@
                 <div class="label">📋 Select Test Scenario</div>
                 <select id="testScenario">
                     <option value="custom">Custom Input</option>
-                    <option value="full">Full Information - All Fields</option>
-                    <option value="minimal">Minimal Information - Basic Only</option>
-                    <option value="no_target">No Target Role - Skills Only</option>
-                    <option value="work_full">Work Description - With Achievements</option>
-                    <option value="work_basic">Work Description - Basic</option>
-                    <option value="skills">Skills Summary</option>
+                    <optgroup label="Experience">
+                        <option value="experience_current">Experience - Current Role</option>
+                        <option value="experience_past">Experience - Past Role</option>
+                    </optgroup>
+                    <optgroup label="Projects">
+                        <option value="project_ongoing">Project - Ongoing</option>
+                        <option value="project_completed">Project - Completed</option>
+                    </optgroup>
+                    <optgroup label="Certificates">
+                        <option value="certificate_in_progress">Certificate - In Progress</option>
+                        <option value="certificate_completed">Certificate - Completed</option>
+                    </optgroup>
+                    <optgroup label="Objective">
+                        <option value="objective">Objective/Summary</option>
+                    </optgroup>
                 </select>
             </div>
 
             <div class="section">
-                <div class="label">✍️ Test Input (JSON)</div>
+                <div class="label">✏️ Test Input (JSON)</div>
                 <textarea id="input"></textarea>
             </div>
 
@@ -289,6 +350,10 @@
             <div class="response-container" id="responseContainer">
                 <div class="response-header" id="responseHeader"></div>
                 <div class="response-content" id="responseContent"></div>
+                <div class="raw-json" id="rawJson" style="display: none;">
+                    <div style="font-weight: 600; margin-bottom: 10px;">Raw JSON Response:</div>
+                    <pre id="rawJsonContent"></pre>
+                </div>
                 <div class="debug-info" id="debugInfo" style="display: none;"></div>
             </div>
         </div>
@@ -296,82 +361,65 @@
 
     <script>
         const scenarios = {
-            full: {
-                request_type: "generate_objective",
-                user_data: {
-                    name: "Ahmed Khan",
-                    current_role: "Software Developer",
+            experience_current: {
+                section_type: "experience",
+                data: {
+                    title_position: "Senior Software Developer",
+                    organization_company: "TechCorp Solutions",
+                    from_date: "01/2022",
+                    to_date: "present"
+                }
+            },
+            experience_past: {
+                section_type: "experience",
+                data: {
+                    title_position: "Software Developer",
+                    organization_company: "Digital Innovations Ltd",
+                    from_date: "06/2019",
+                    to_date: "12/2021"
+                }
+            },
+            project_ongoing: {
+                section_type: "project",
+                data: {
+                    project_name: "E-commerce Platform",
+                    from_date: "08/2024",
+                    to_date: "present"
+                }
+            },
+            project_completed: {
+                section_type: "project",
+                data: {
+                    project_name: "Customer Analytics Dashboard",
+                    from_date: "01/2023",
+                    to_date: "06/2023"
+                }
+            },
+            certificate_in_progress: {
+                section_type: "certificate",
+                data: {
+                    certificate_name: "AWS Solutions Architect Professional",
+                    institute_name: "Amazon Web Services",
+                    from_date: "09/2024",
+                    to_date: "present"
+                }
+            },
+            certificate_completed: {
+                section_type: "certificate",
+                data: {
+                    certificate_name: "AWS Solutions Architect Associate",
+                    institute_name: "Amazon Web Services",
+                    from_date: "01/2023",
+                    to_date: "03/2023"
+                }
+            },
+            objective: {
+                section_type: "objective",
+                data: {
+                    job_title_role: "Software Developer",
                     years_experience: 3,
-                    target_role: "Senior Full Stack Developer",
-                    industry: "FinTech",
-                    key_skills: ["React", "Node.js", "MongoDB", "AWS"],
-                    education: "BS Computer Science"
-                },
-                preferences: {
-                    tone: "professional",
-                    length: "medium",
-                    focus_areas: ["leadership", "technical expertise"]
-                }
-            },
-            minimal: {
-                request_type: "generate_objective",
-                user_data: {
-                    current_role: "Software Developer",
-                    years_experience: 3
-                }
-            },
-            no_target: {
-                request_type: "generate_objective",
-                user_data: {
-                    current_role: "Developer",
-                    industry: "FinTech",
-                    key_skills: ["React", "Node.js"]
-                }
-            },
-            work_full: {
-                request_type: "generate_work_description",
-                user_data: {
-                    job_title: "Junior Software Developer",
-                    company: "Tech Solutions Ltd",
-                    duration: "2021-2024",
-                    responsibilities: [
-                        "Developed web applications",
-                        "Collaborated with team",
-                        "Fixed bugs"
-                    ],
-                    technologies: ["React", "Python", "PostgreSQL"],
-                    achievements: [
-                        "Reduced load time by 40%",
-                        "Implemented new feature that reduced support tickets by 25%"
-                    ]
-                },
-                preferences: {
-                    tone: "achievement-focused",
-                    length: "detailed",
-                    include_metrics: true
-                }
-            },
-            work_basic: {
-                request_type: "generate_work_description",
-                user_data: {
-                    job_title: "Software Developer",
-                    company: "Tech Corp",
-                    responsibilities: [
-                        "Developed applications",
-                        "Worked with team"
-                    ]
-                }
-            },
-            skills: {
-                request_type: "generate_skills_summary",
-                user_data: {
-                    key_skills: ["JavaScript", "Python", "React", "Node.js", "Docker", "AWS", "Problem Solving", "Team Leadership"],
-                    years_experience: 3,
-                    target_role: "Senior Full Stack Developer"
-                },
-                preferences: {
-                    tone: "professional",
-                    length: "medium"
+                    key_skills: ["React", "Node.js", "AWS"],
+                    career_goal: "join an innovative team to build scalable applications"
                 }
             }
         };
@@ -398,6 +446,55 @@
             document.getElementById('responseContainer').classList.remove('show');
         }
 
+        function countWords(text) {
+            return text.trim().split(/\s+/).length;
+        }
+
+        function displayFormattedResponse(result) {
+            const responseContent = document.getElementById('responseContent');
+            const rawJson = document.getElementById('rawJson');
+            const rawJsonContent = document.getElementById('rawJsonContent');
+            
+            // Show raw JSON
+            rawJson.style.display = 'block';
+            rawJsonContent.textContent = JSON.stringify(result, null, 2);
+
+            // Check if response has the expected structure
+            if (result.descriptions && Array.isArray(result.descriptions)) {
+                let html = `<div style="margin-bottom: 20px;">
+                    <strong>Section Type:</strong> ${result.section_type || 'N/A'}
+                </div>`;
+
+                result.descriptions.forEach(desc => {
+                    const wordCount = countWords(desc.text);
+                    const toneClass = desc.tone.toLowerCase();
+                    
+                    html += `
+                        <div class="tone-block ${toneClass}">
+                            <div class="tone-title">${desc.tone} Tone</div>
+                            <div class="tone-text">${desc.text}</div>
+                            <div class="word-count">Word count: ${wordCount}</div>
+                        </div>
+                    `;
+                });
+
+                responseContent.innerHTML = html;
+            } else if (result.error) {
+                responseContent.innerHTML = `
+                    <div style="color: #dc3545; font-weight: 600; margin-bottom: 10px;">
+                        Error from Agent:
+                    </div>
+                    <div style="color: #555;">${result.error}</div>
+                `;
+            } else {
+                responseContent.innerHTML = `
+                    <div style="color: #ff9800; font-weight: 600; margin-bottom: 10px;">
+                        Unexpected response format. See raw JSON below.
+                    </div>
+                `;
+            }
+        }
+
         function showSuccess(message) {
             const responseContainer = document.getElementById('responseContainer');
             const responseHeader = document.getElementById('responseHeader');
@@ -406,7 +503,7 @@
             responseContainer.classList.add('show');
             responseContainer.classList.remove('error');
             responseHeader.innerHTML = '✅ <span class="success">Success!</span>';
-            responseContent.textContent = message;
+            responseContent.innerHTML = `<div style="color: #28a745;">${message}</div>`;
         }
 
         function showError(message, debugData = null) {
@@ -414,10 +511,12 @@
             const responseHeader = document.getElementById('responseHeader');
             const responseContent = document.getElementById('responseContent');
             const debugInfo = document.getElementById('debugInfo');
+            const rawJson = document.getElementById('rawJson');
 
             responseContainer.classList.add('show', 'error');
             responseHeader.innerHTML = '❌ <span class="error">Error</span>';
-            responseContent.textContent = message;
+            responseContent.innerHTML = `<div style="color: #dc3545;">${message}</div>`;
+            rawJson.style.display = 'none';
 
             if (debugData) {
                 debugInfo.style.display = 'block';
@@ -457,22 +556,23 @@
             responseContainer.classList.add('show');
             responseContainer.classList.remove('error');
             responseHeader.innerHTML = '<div class="loading"></div> Testing agent... Please wait...';
-            responseContent.textContent = '';
+            responseContent.innerHTML = '';
+            document.getElementById('rawJson').style.display = 'none';
             testBtn.disabled = true;
 
             try {
                 let result;
                 
                 if (agentId) {
-                    responseContent.textContent = 'Using Assistant API with ID: ' + agentId + '\nCreating thread...';
+                    responseContent.innerHTML = '<div style="color: #666;">Using Assistant API with ID: ' + agentId + '<br>Creating thread...</div>';
                     result = await testWithAssistant(apiKey, agentId, testInput);
                 } else {
-                    responseContent.textContent = 'Using Chat Completion API (no agent ID provided)...';
+                    responseContent.innerHTML = '<div style="color: #666;">Using Chat Completion API (no agent ID provided)...</div>';
                     result = await testWithChatCompletion(apiKey, testInput);
                 }
 
                 responseHeader.innerHTML = '✅ <span class="success">Success! Agent Response:</span>';
-                responseContent.textContent = JSON.stringify(result, null, 2);
+                displayFormattedResponse(result);
             } catch (error) {
                 showError(error.message, error.debugData);
             } finally {
@@ -603,9 +703,15 @@
                 const assistantMessage = messagesData.data[0].content[0].text.value;
 
                 try {
-                    return JSON.parse(assistantMessage);
+                    // Strip markdown code blocks if present
+                    let cleanMessage = assistantMessage.trim();
+                    if (cleanMessage.startsWith('```json')) {
+                        cleanMessage = cleanMessage.replace(/^```json\s*/, '').replace(/```\s*$/, '');
+                    } else if (cleanMessage.startsWith('```')) {
+                        cleanMessage = cleanMessage.replace(/^```\s*/, '').replace(/```\s*$/, '');
+                    }
+                    return JSON.parse(cleanMessage);
                 } catch (parseError) {
-                    // If response is not JSON, return as is
                     return { raw_response: assistantMessage };
                 }
             } catch (error) {
@@ -619,7 +725,7 @@
 
         async function waitForRun(apiKey, threadId, runId) {
             let attempts = 0;
-            const maxAttempts = 60; // Increased timeout
+            const maxAttempts = 60;
             const headers = {
                 'Authorization': `Bearer ${apiKey}`,
                 'OpenAI-Beta': 'assistants=v2'
@@ -639,7 +745,7 @@
                 }
 
                 const responseContent = document.getElementById('responseContent');
-                responseContent.textContent = `Waiting for completion... Status: ${run.status} (${attempts + 1}/${maxAttempts})`;
+                responseContent.innerHTML = `<div style="color: #666;">Waiting for completion... Status: ${run.status} (${attempts + 1}/${maxAttempts})</div>`;
 
                 if (run.status === 'completed' || run.status === 'failed' || run.status === 'cancelled' || run.status === 'expired') {
                     return run;
